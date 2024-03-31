@@ -1,0 +1,663 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+```
+
+```{r}
+energia_pLDDT_RSA <- read_csv("C:/tablas_tesina/1er capitulo/energia_pLDDT_RSA.csv")
+View(energia_pLDDT_RSA)
+```
+
+```{r}
+mutaciones <- read_csv("C:/tablas_tesina/1er capitulo/mutaciones")
+
+```
+
+
+
+```{r}
+columnas_seleccionadas <- mutaciones[, c('Entry', 'Extra',"Protein_position")]
+```
+
+```{r}
+columnas_seleccionadas1 <- columnas_seleccionadas
+```
+```{r}
+columnas_seleccionadas2 <- columnas_seleccionadas
+```
+
+```{r}
+columnas_seleccionadas3 <- columnas_seleccionadas
+```
+
+```{r}
+
+
+
+columnas_seleccionadas <- columnas_seleccionadas %>%
+  mutate(Extra = ifelse(is.na(Extra), "NA", Extra))
+
+# Separate the "Extra" column into new columns
+columnas_seleccionadas <- columnas_seleccionadas %>%
+  separate(col = Extra, 
+           into = c("ENS", "Polyphen", "SIFT", "HGNC"), 
+           sep = ";", 
+           remove = FALSE)
+
+```
+
+```{r}
+num_filas <- nrow(columnas_seleccionadas)
+
+# Iterar sobre cada fila del dataframe
+for (i in 1:num_filas) {
+  # Verificar si el patrón de caracteres no coincide con el nombre de la columna
+  if (substr(columnas_seleccionadas}[i, "Columna1"], 1, 1) != "C") {
+    # Mover la entrada a otra columna
+    columnas_seleccionadas[i, "Columna3"] <- df[i, "Columna1"]
+    columnas_seleccionadas[i, "Columna1"] <- NA  # Eliminar la entrada de la columna original
+  }
+}
+
+```
+
+```{r}
+num_filas <- nrow(columnas_seleccionadas)
+
+# Iterar sobre cada fila del dataframe
+for (i in 1:num_filas) {
+  # Encontrar las posiciones donde PolyPhen contiene "SIFT"
+  posiciones_sift <- grep("HGNC", columnas_seleccionadas[i, "Polyphen"])
+  
+  # Verificar si hay posiciones encontradas y luego intercambiar los valores
+  if (length(posiciones_sift) > 0) {
+    columnas_seleccionadas[i, "HGNC"][posiciones_sift] <- columnas_seleccionadas[i, "Polyphen"][posiciones_sift]
+    df[i, "Polyphen"][posiciones_sift] <- NA
+  }
+}
+view(columnas_seleccionadas)
+```
+
+
+```{r}
+columnas_seleccionadas <- columnas_seleccionadas %>%
+  mutate(SIFT = if_else(!is.na(Polyphen) & !is.na(HGNC) & SIFT == HGNC, NA, SIFT))
+
+```
+
+
+```{r}
+write.csv(columnas_seleccionadas,"C://tablas_tesina//1er capitulo//Analisis_SNP.csv")
+```
+
+
+
+
+
+```{r}
+Analisis_SNP <- read_csv("C:/tablas_tesina/1er capitulo/Analisis_SNP")
+```
+
+
+
+```{r}
+energia_pLDDT_RSA <- read_csv("C:/tablas_tesina/1er capitulo/energia_pLDDT_RSA.csv")
+view(energia_pLDDT_RSA)
+```
+
+```{r}
+Analisis_mut_snp<-cbind(mutaciones$Protein_position,Analisis_SNP)
+
+```
+
+
+
+```{r}
+
+#resultado <- inner_join(energia_pLDDT_RSA, analisis_mut_snp, by = c("Uniprot_ID" = "Entry","Posicion_mut"="pos_mut"))
+```
+
+
+```{r}
+names(Analisis_mut_snp)[names(Analisis_mut_snp) == "mutaciones$Protein_position"] <- "pos_mut"
+view(Analisis_mut_snp)
+```
+
+
+```{r}
+kk <- merge(energia_pLDDT_RSA, Analisis_mut_snp, by.x = c("Uniprot_ID", "Posicion_mut"), by.y = c("Entry", "pos_mut"))
+```
+
+
+```{r}
+indices_a_eliminar <- c(258,540,542,559,561,631,633)
+kkck <- kk[-indices_a_eliminar, ]
+```
+
+```{r}
+view(kkck)
+```
+
+
+
+```{r}
+kkck1 <- kkck %>%
+ mutate(clas_SIFT = ifelse(is.na(numSIFT), "NA",
+                                ifelse(numSIFT < 0.05, "Deleterea", "Tolerable")))
+view(kkck1)
+```
+
+```{r}
+kkck2 <- kkck1 %>%
+  mutate(clas_Polyphen = ifelse(is.na(numPolyphen), "NA",
+                                ifelse(numPolyphen < 0.446, "Benigna",
+                                ifelse(numPolyphen < 0.908, "Posiblemente danina", "Probablemente danina"))))
+view(kkck2)
+```
+
+```{r}
+library(stringr)
+```
+
+
+
+```{r}
+grafico <- ggplot(df_category, aes(x = vector_category, y = vector_clasif_SNPs,fill="blue")) +
+  geom_bar(stat = "identity") +
+  theme(legend.position="none")
+ggsave("C://tesina//Graficos//1er capitulo//graf_clas_SNP.png", plot = grafico, width = 8, height = 6)
+graf<-grafico + labs(title = "Clasificación de SNPs con SIFT",x = "SNP", y = "") 
+```
+
+```{r}
+Benignas <- sum(str_detect(kkck2$clas_Polyphen, "Benigna"))
+
+Posiblemente_dañina <- sum(str_detect(kkck2$clas_Polyphen, "Posiblemente danina"))
+
+Probablemente_dañina<- sum(str_detect(kkck2$clas_Polyphen, "Probablemente danina"))
+
+Benignas<-as.numeric(Benignas)
+Posiblemente_dañina<-as.numeric(Posiblemente_dañina)
+Probablemente_dañina<-as.numeric(Probablemente_dañina)
+print(Probablemente_dañina)
+```
+
+```{r}
+vector_clasif_SNPs_P<-c(Benignas,Posiblemente_dañina,Probablemente_dañina)
+vector_clasif_Poly<-c("Benignas","Posiblemente dañina","Probablemente dañina")
+df_clasif_Poly<-data.frame(vector_clasif_Poly,vector_clasif_SNPs_P)
+
+View(df_clasif_Poly)
+
+```
+
+```{r}
+p <- ggplot(df_clasif_Poly, aes(x = vector_clasif_Poly, y = vector_clasif_SNPs_P,fill="blue")) +
+  geom_bar(stat = "identity") +
+  theme(legend.position="none")
+ggsave("C://tesina//Graficos//1er capitulo//graf_clas_SNP_poly.png", plot = q, width = 8, height = 6)
+q<-p + labs(title = "Clasificación de SNPs con PolyPhen-2",x = "SNP", y = "") 
+q
+```
+
+
+```{r}
+cor_Polyphen<-cor.test(kkck2$energia_normalizada_tot,kkck2$numPolyphen,method = "pearson")
+
+hola<-ggplot(kkck2, aes(x=energia_normalizada_tot, y=numPolyphen, color=clas_Polyphen,shape=clas_Polyphen)) + 
+    geom_point(size=1) 
+hol<-hola + labs(title = "ΔΔG vs PolyPhen score",x = "ΔΔG", y = "PolyPhen score") +
+  annotate("text", x = Inf, y = -Inf, 
+             label = paste("r =", round(cor_Polyphen$estimate, 2), "p =", signif(cor_Polyphen$p.value, 3)),
+             hjust = 1, vjust = -5,
+             size = 3)
+
+hol
+
+
+ggsave("C://tesina//Graficos//1er capitulo//grafDDGvsPoly3.png", plot = hol, width = 8, height = 6)
+```
+
+```{r}
+cor_SIFT<-cor.test(kkck2$energia_normalizada_tot,kkck2$numSIFT,method = "pearson")
+
+holu<-ggplot(kkck2, aes(x=energia_normalizada_tot, y=numSIFT, color=clas_SIFT,shape=clas_SIFT)) + 
+    geom_point(size=1) 
+holi<-holu + labs(title = "ΔΔG vs SIFT score",x = "ΔΔG", y = "SIFT score")  + annotate("text", x = Inf, y = -Inf, 
+             label = paste("r =", round(cor_SIFT$estimate, 2), "p =", signif(cor_SIFT$p.value, 3)),
+             hjust = 1, vjust = -5,
+             size = 3)
+holi
+ggsave("C://tesina//Graficos//1er capitulo//grafDDGvsSIFT3.png", plot = holi, width = 8, height = 6)
+```
+
+```{r}
+densidad_Polyphen<-ggplot(data=kkck2)+aes(x=numPolyphen)+geom_density(fill="#AE0500")
+densidad_Poly1<-densidad_Polyphen+ xlab("Polyphen score") +labs(title = "Gráfico densidad Polyphen score")
+ggsave("C://tesina//Graficos//1er capitulo//graf_densidad_Poly.png", plot = densidad_Poly1, width = 8, height = 6)
+densidad_Poly1
+
+```
+
+```{r}
+densidad_SIFT<-ggplot(data=kkck2)+aes(x=numSIFT)+geom_density(fill="#AE0500")
+densidad_SIFT1<-densidad_SIFT+ xlab("SIFT score") +labs(title = "Gráfico densidad SIFT score")
+ggsave("C://tesina//Graficos//1er capitulo//graf_densidad_SIFT.png", plot = densidad_SIFT1, width = 8, height = 6)
+densidad_SIFT1
+```
+
+```{r}
+write.csv(kkck2,"C://tablas_tesina//1er capitulo//datosfull.csv")
+```
+
+
+```{r}
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA#CAMBIAR A PARTIR DE ACA
+#CAMBIAR A PARTIR DE ACA#CAMBIAR A PARTIR DE ACA#CAMBIAR A PARTIR DE ACA#CAMBIAR A PARTIR DE ACA#CAMBIAR A PARTIR DE ACA#CAMBIAR A PARTIR DE ACA#CAMBIAR A PARTIR DE ACA#CAMBIAR A PARTIR DE ACA
+
+#CAMBIAR A PARTIR DE ACA#CAMBIAR A PARTIR DE ACA#CAMBIAR A PARTIR DE ACA
+
+
+
+
+```
+
+
+
+```{r}
+kkck3 <- na.omit(kkck2)
+
+dfben <- subset(kkck3, numPolyphen < 0.446)
+dfpos <- subset(kkck3, numPolyphen >= 0.446 & num_Polyphen <= 0.908)
+dfprob <- subset(kkck3, numPolyphen > 0.908)
+```
+
+```{r}
+dfPoly<-subset(kkck3, numPolyphen >= 0.446)
+```
+
+
+```{r}
+wil_test_Poly_ben_pos<-wilcox.test(dfben$numPolyphen,dfpos$numPolyphen , paired = FALSE)
+wil_test_Poly_ben_prob<-wilcox.test(dfben$numPolyphen, dfprob$numPolyphen, paired = FALSE)
+wil_test_Poly_prob_pos<-wilcox.test(dfprob$numPolyphen, dfpos$numPolyphen, paired = FALSE)
+
+#wil_test_benvspos<-wilcox.test(kkck2,kkck2$numPolyphen , paired = FALSE)
+
+
+
+
+f <- ggplot(data = kkck3, aes(x = clas_Polyphen, y = energia_normalizada_tot)) +
+  geom_boxplot(aes(fill = clas_Polyphen)) +
+  geom_jitter(color = "black", size = 0.4, alpha = 0.9) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 11)
+  ) +
+  ggtitle("") +
+  xlab("") + 
+  geom_text(x=1.5,y=8.5,
+label = paste("p-valor 1:", format(wil_test_Poly_ben_pos$p.value, digits = 3))) +
+  geom_text(x=2,y=10,
+label = paste("p-valor 3:", format(wil_test_Poly_ben_prob$p.value, digits = 3))) + 
+  geom_text(x=2.5,y=8.5,
+label = paste("p-valor 2:", format(wil_test_Poly_prob_pos$p.value, digits = 3)))
+  
+f
+ggsave("C://tesina//Graficos//1er capitulo//boxplot_Poly_DDDG1.png", plot = f, width = 8, height = 6)
+
+
+
+```
+
+```{r}
+wil_test_SIFT<-wilcox.test(dfDelet$numPolyphen, dfTol$numPolyphen, paired = FALSE)
+
+dfDelet <- subset(kkck3, numSIFT < 0.05)
+dfTol <- subset(kkck3, numSIFT >= 0.05)
+
+
+g <- ggplot(data = kkck3, aes(x = clas_SIFT, y = energia_normalizada_tot)) +
+  geom_boxplot(aes(fill = clas_SIFT)) +
+  geom_jitter(color = "black", size = 0.4, alpha = 0.9) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 11)
+  ) +
+  
+  ggtitle("") +
+  xlab("") + 
+  geom_text(x=1.5,y=8.5,
+label = paste("p-valor:", format(wil_test_SIFT$p.value, digits = 3)))
+g
+ggsave("C://tesina//Graficos//1er capitulo//boxplot_SIFT_DDDG2.png", plot = g, width = 8, height = 6)
+```
+
+
+```{r}
+df_desest_DDG <- subset(kkck3, cambio_energia >= 2)
+```
+
+
+```{r}
+install.packages("VennDiagram")
+
+# Carga la biblioteca
+library(VennDiagram)
+```
+
+
+```{r}
+setDDG <-df_desest_DDG$Uniprot_ID
+setPoly <-dfPoly$Uniprot_ID
+setSIFT <-dfDelet$Uniprot_ID
+
+z<-list(setDDG,setPoly,setSIFT)
+
+ggVennDiagram(z[1:3])
+
+```
+
+
+
+
+```{r}
+install.packages("VennDiagram")
+library(VennDiagram)
+
+# Define los nombres de los conjuntos y los colores que deseas usar
+set_names <- c("FoldX", "PolyPhen 2", "SIFT")  # Nombres de los conjuntos
+set_colors <- c("red", "blue", "green")    # Colores de los conjuntos
+
+# Crea un objeto de diagrama de Venn personalizado
+venn_obj <- venn.diagram(
+  x = z[1:3],  # Lista de conjuntos
+  category.names = set_names,  # Nombres de los conjuntos
+  category.col = set_colors,  # Colores de los conjuntos
+  filename = NULL,  # Puedes especificar un nombre de archivo si deseas guardar el diagrama como una imagen
+  output=FALSE  # Evita que se muestre el gráfico de inmediato (puedes mostrarlo más tarde)
+)
+grid.draw(venn_obj)
+```
+
+
+```{r}
+install.packages("gridExtra")
+library(gridExtra)
+
+
+grid.arrange(venn_obj)
+ggsave("C://tesina//Graficos//1er capitulo//venn_diagram1.png", 
+  plot = venn_obj,
+  device = "png",
+  width = 10, 
+  height = 10,
+  units = "in",  # Específica la unidad de medida
+  dpi = 300  # Puedes ajustar la resolución DPI según tus necesidades
+)
+```
+
+
+```{r}
+library(VennDiagram)
+common_data <- Reduce(intersect, list(setDDG, setPoly, setSIFT))
+common_data
+```
+
+```{r}
+kkck3a <- kkck3 %>%
+ mutate(Orden = ifelse(is.na(pLDDT_mut_nean_tot), "NA",
+                                ifelse(pLDDT_mut_nean_tot < 50, "Ordenada", "Desordenada")))
+view(kkck3a)
+```
+
+
+```{r}
+cor_PolyOr<-cor.test(kkck3a$pLDDT_mut_nean_tot,kkck3a$Polyphen,method = "pearson")
+
+u<-ggplot(kkck3a, aes(x=pLDDT_mut_nean_tot, y=Polyphen, color=clas_Polyphen,shape=Orden)) + 
+    geom_point(size=1) 
+q<-u + labs(title = "pLDDT vs PolyPhen 2 score",x = "pLDDT", y = "Polyphen 2 score")  + annotate("text", x = Inf, y = -Inf, 
+             label = paste("r =", round(cor_PolyOr$estimate, 2), "p =", signif(cor_PolyOr$p.value, 3)),
+             hjust = 1, vjust = 0,
+             size = 3)
+q
+ggsave("C://tesina//Graficos//1er capitulo//pLDDT_vs_Poly1.png", plot = q, width = 8, height = 6)
+
+```
+
+
+
+```{r}
+kkck3b <- kkck3a %>%
+ mutate(Exp_solvente = ifelse(is.na(pLDDT_mut_nean_tot), "NA",
+                                ifelse(RSA < 25, "Buried", "Exposed")))
+view(kkck3b)
+```
+
+```{r}
+cor_PolyRSA<-cor.test(kkck3a$RSA,kkck3a$Polyphen,method = "pearson")
+
+fi<-ggplot(kkck3b, aes(x=RSA, y=Polyphen, color=clas_Polyphen,shape=Exp_solvente)) + 
+    geom_point(size=1) 
+fa<-fi + labs(title = "RSA vs PolyPhen 2 score",x = "RSA", y = "Polyphen 2 score")  + annotate("text", x = Inf, y = -Inf, 
+             label = paste("r =", round(cor_PolyRSA$estimate, 2), "p =", signif(cor_PolyRSA$p.value, 3)),
+             hjust = 1, vjust = -10,
+             size = 3)
+fa
+ggsave("C://tesina//Graficos//1er capitulo//RSA_vs_Poly.png", plot = fa, width = 8, height = 6)
+```
+
+```{r}
+cor_siftor<-cor.test(kkck3a$pLDDT_mut_nean_tot,kkck3a$SIFT,method = "pearson")
+
+r<-ggplot(kkck3a, aes(x=pLDDT_mut_nean_tot, y=numSIFT, color=clas_SIFT,shape=Orden)) + 
+    geom_point(size=1) 
+s<-r + labs(title = "pLDDT vs SIFT score",x = "pLDDT", y = "SIFT score")  + annotate("text", x = Inf, y = -Inf, 
+             label = paste("r =", round(cor_siftor$estimate, 2), "p =", signif(cor_siftor$p.value, 3)),
+             hjust = 1, vjust = 0,
+             size = 3)
+s
+ggsave("C://tesina//Graficos//1er capitulo//pLDDT_vs_sift1.png", plot = s, width = 8, height = 6)
+
+```
+
+```{r}
+cor_siftrsa<-cor.test(kkck3b$RSA,kkck3b$SIFT,method = "pearson")
+
+fo<-ggplot(kkck3b, aes(x=RSA, y=SIFT, color=clas_SIFT,shape=Exp_solvente)) + 
+    geom_point(size=1) 
+fe<-fo + labs(title = "RSA vs SIFT score",x = "RSA", y = "SIFT score")  + annotate("text", x = Inf, y = -Inf, 
+             label = paste("r =", round(cor_siftrsa$estimate, 2), "p =", signif(cor_siftrsa$p.value, 3)),
+             hjust = 1, vjust = -10,
+             size = 3)
+fe
+ggsave("C://tesina//Graficos//1er capitulo//RSA_vs_SIFT.png", plot = fe, width = 8, height = 6)
+```
+
+```{r}
+wil_test_Poly_ben_pos<-wilcox.test(dfben$numPolyphen,dfpos$numPolyphen , paired = FALSE)
+wil_test_Poly_ben_prob<-wilcox.test(dfben$numPolyphen, dfprob$numPolyphen, paired = FALSE)
+wil_test_Poly_prob_pos<-wilcox.test(dfprob$numPolyphen, dfpos$numPolyphen, paired = FALSE)
+
+#wil_test_benvspos<-wilcox.test(kkck2,kkck2$numPolyphen , paired = FALSE)
+
+
+
+
+f <- ggplot(data = kkck3b, aes(x = clas_Polyphen, y = energia_normalizada_tot)) +
+  geom_boxplot(aes(fill = clas_Polyphen)) +
+  geom_jitter(color = "black", size = 0.4, alpha = 0.9) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 11)
+  ) +
+  ggtitle("") +
+  xlab("") + 
+  geom_text(x=1.5,y=8.5,
+label = paste("p-valor 1:", format(wil_test_Poly_ben_pos$p.value, digits = 3))) +
+  geom_text(x=2,y=10,
+label = paste("p-valor 3:", format(wil_test_Poly_ben_prob$p.value, digits = 3))) + 
+  geom_text(x=2.5,y=8.5,
+label = paste("p-valor 2:", format(wil_test_Poly_prob_pos$p.value, digits = 3)))
+  
+f
+ggsave("C://tesina//Graficos//1er capitulo//boxplot_Poly_DDDG1.png", plot = f, width = 8, height = 6)
+
+
+```
+
+```{r}
+wil_test_Poly_ben_pos<-wilcox.test(dfben$numPolyphen,dfpos$numPolyphen , paired = FALSE)
+wil_test_Poly_ben_prob<-wilcox.test(dfben$numPolyphen, dfprob$numPolyphen, paired = FALSE)
+wil_test_Poly_prob_pos<-wilcox.test(dfprob$numPolyphen, dfpos$numPolyphen, paired = FALSE)
+
+#wil_test_benvspos<-wilcox.test(kkck2,kkck2$numPolyphen , paired = FALSE)
+
+
+
+
+f <- ggplot(data = kkck3b, aes(x = clas_Polyphen, y = energia_normalizada_tot)) +
+  geom_boxplot(aes(fill = clas_Polyphen)) +
+  geom_jitter(color = "black", size = 0.4, alpha = 0.9) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 11)
+  ) +
+  ggtitle("") +
+  xlab("") + 
+  geom_text(x=1.5,y=8.5,
+label = paste("p-valor 1:", format(wil_test_Poly_ben_pos$p.value, digits = 3))) +
+  geom_text(x=2,y=10,
+label = paste("p-valor 3:", format(wil_test_Poly_ben_prob$p.value, digits = 3))) + 
+  geom_text(x=2.5,y=8.5,
+label = paste("p-valor 2:", format(wil_test_Poly_prob_pos$p.value, digits = 3)))
+  
+f
+ggsave("C://tesina//Graficos//1er capitulo//boxplot_Poly_DDDG1.png", plot = f, width = 8, height = 6)
+
+
+```
+
+```{r}
+wil_test_SIFT<-wilcox.test(dfDelet$numPolyphen, dfTol$numPolyphen, paired = FALSE)
+
+dfDelet <- subset(kkck3, numSIFT < 0.05)
+dfTol <- subset(kkck3, numSIFT >= 0.05)
+
+
+g <- ggplot(data = kkck3, aes(x = clas_SIFT, y = energia_normalizada_tot)) +
+  geom_boxplot(aes(fill = clas_SIFT)) +
+  geom_jitter(color = "black", size = 0.4, alpha = 0.9) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 11)
+  ) +
+  
+  ggtitle("") +
+  xlab("") + 
+  geom_text(x=1.5,y=8.5,
+label = paste("p-valor:", format(wil_test_SIFT$p.value, digits = 3)))
+g
+ggsave("C://tesina//Graficos//1er capitulo//boxplot_SIFT_DDDG2.png", plot = g, width = 8, height = 6)
+```
+
+```{r}
+wil_test_SIFT<-wilcox.test(dfDelet$numPolyphen, dfTol$numPolyphen, paired = FALSE)
+
+dfDelet <- subset(kkck3, numSIFT < 0.05)
+dfTol <- subset(kkck3, numSIFT >= 0.05)
+
+
+g <- ggplot(data = kkck3, aes(x = clas_SIFT, y = energia_normalizada_tot)) +
+  geom_boxplot(aes(fill = clas_SIFT)) +
+  geom_jitter(color = "black", size = 0.4, alpha = 0.9) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 11)
+  ) +
+  
+  ggtitle("") +
+  xlab("") + 
+  geom_text(x=1.5,y=8.5,
+label = paste("p-valor:", format(wil_test_SIFT$p.value, digits = 3)))
+g
+ggsave("C://tesina//Graficos//1er capitulo//boxplot_SIFT_DDDG2.png", plot = g, width = 8, height = 6)
+```
+
+```{r}
+subset_desor <- subset(kkck3b,Orden == "Desordenada")
+subset_desor_poly1 <- subset(subset_desor,clas_Polyphen == "Posiblemente danina")
+subset_desor_sift <- subset(subset_desor,clas_SIFT == "Deleterea")
+subset_desor_poly2 <- subset(subset_desor,clas_Polyphen == "Probablemente danina")
+subset_deses1 <- subset(subset_desor,energia_normalizada_tot>=2)
+view(subset_deses1)
+```
+
+```{r}
+subset_Expuestas <- subset(kkck3b,Exp_solvente == "Exposed")
+subset_Exp_sift <- subset(subset_Expuestas,clas_SIFT == "Deleterea")
+subset_Exp_Poly1 <- subset(subset_Expuestas,clas_Polyphen == "Posiblemente danina")
+subset_Exp_Poly2 <- subset(subset_Expuestas,clas_Polyphen == "Probablemente danina")
+subset_deses <- subset(subset_Expuestas,energia_normalizada_tot>=2)
+view(subset_deses)
+```
+
+```{r}
+cor_SIFT_poly<-cor.test(kkck3a$numSIFT,kkck3a$numPolyphen,method = "pearson")
+
+pi<-ggplot(kkck3b, aes(x=numSIFT, y=numPolyphen, color=clas_Polyphen,shape=clas_SIFT)) + 
+    geom_point(size=1) 
+pa<-pi + labs(title = "SIFT score vs Polyphen-2 score",x = "SIFT score", y = "Polyphen-2 score")  + annotate("text", x = Inf, y = -Inf, 
+             label = paste("r =", round(cor_SIFT_poly$estimate, 2), "p =", signif(cor_SIFT_poly$p.value, 3)),
+             hjust = 1, vjust = -10,
+             size = 3)
+pa
+ggsave("C://tesina//Graficos//1er capitulo//SIFT_vs_poly.png", plot = pa, width = 8, height = 6)
+```
+
+
+```{r}
+write.csv(kkck3b,"C://tablas_tesina//1er capitulo//datosfull.csv")
+```
+
+
+
+
+
+
+
+
+
+
+
+

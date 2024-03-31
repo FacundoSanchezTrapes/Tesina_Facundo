@@ -1,0 +1,100 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+
+```{r}
+Genome_VEP_Human <- read_delim("C:/tablas_tesina/Genome_VEP_Human.tsv", 
+    delim = "\t", escape_double = FALSE, 
+    trim_ws = TRUE)
+View(Genome_VEP_Human)
+```
+```{r}
+data<-read.csv("C://tablas_tesina/kung_funding_data_20_5_23.csv")
+```
+
+```{r}
+vector_nombre_genes<-subset(Genome_VEP_Human,select = Gene)
+
+write.csv(vector_nombre_genes, file = "vectornombregenes.csv", row.names = FALSE)
+
+```
+
+
+```{r}
+maping_gene_prote <- read_delim("C:/tablas_tesina/maping_gene-prote.tsv", 
+    delim = "\t", escape_double = FALSE, 
+    trim_ws = TRUE)
+View(maping_gene_prote)
+```
+
+
+```{r}
+nuevos_datos_desorden <- read_csv("C:/tablas_tesina/nuevos_datos_desorden.csv")
+View(nuevos_datos_desorden)
+```
+
+
+
+```{r}
+mergedData <-merge(maping_gene_prote,data, by.x="Entry",
+    by.y="uniprot_id")
+view(mergedData)
+```
+
+```{r}
+mergedData2<-merge(nuevos_datos_desorden,mergedData,by.x="uniprot_id",
+        by.y ="Entry")
+mergedData2
+```
+
+```{r}
+mergedData3<-merge(mergedData2,Genome_VEP_Human,by.x="From",by.y = "Gene")
+View(mergedData3)
+
+```
+
+```{r}
+filtro_nonsyn_desorden<-mergedData3 %>% 
+filter(mergedData3$Protein_position >= mergedData3$deso_beg & mergedData3$Protein_position <= mergedData3$deso_end)
+View(filtro_nonsyn_desorden)
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+

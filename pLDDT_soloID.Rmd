@@ -1,0 +1,74 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(bio3d)
+library(tidyverse)
+```
+
+
+```{r}
+# Función para extraer el ID de PDB y la columna de beta de un archivo PDB
+extract_beta_from_pdb <- function(ruta_archivo) {
+  # Leer el archivo PDB
+  pdb_data <- read.pdb(ruta_archivo, multi=TRUE, rm.insert = TRUE)
+  
+ 
+  ID <- basename(ruta_archivo)
+  
+  pdb_B <- pdb_data$atom$beta
+  
+  # Verificar si pdb_B tiene elementos
+  if (length(pdb_B) == 0) {
+    # Si no hay elementos, agregar un valor nulo al data frame
+    return(data.frame(ID = ID, plddt = NA))
+  } else {
+    # Si hay elementos, retornar el ID de PDB y beta como un data frame
+    return(data.frame(ID = ID, plddt = pdb_B))
+  }
+}
+
+
+```
+
+```{r}
+# Función para leer todos los archivos PDB en una carpeta y combinar los datos
+leer_pdbs_y_combinar <- function(ruta_carpeta) {
+  # Obtener una lista de todos los archivos PDB en la carpeta
+  pdb_files <- list.files(ruta_carpeta, pattern = ".pdb$", full.names = TRUE)
+  
+  # Inicializar listas para almacenar los datos extraídos
+  id_list <- vector("character", length(pdb_files))
+  plddt_list <- vector("list", length(pdb_files))
+  
+  # Recorrer cada archivo PDB y extraer los datos
+  for (i in seq_along(pdb_files)) {
+    id_list[i] <- basename(pdb_files[i])
+    plddt_list[[i]] <- extract_beta_from_pdb(pdb_files[i])$plddt
+  }
+  
+  # Repetir los ID para que tengan la misma longitud que los vectores plddt
+  id_repeated <- rep(id_list, times = sapply(plddt_list, length))
+  
+  # Unir todos los elementos en plddt_list en un solo vector
+  plddt_combined <- unlist(plddt_list)
+  
+  # Combinar los datos en un único data frame
+  combined_data <- data.frame(ID = id_repeated, plddt = plddt_combined)
+  
+  return(combined_data)
+}
+```
+
+
+```{r}
+folder_path <- "C://tablas_tesina//popote//"
+df<-leer_pdbs_y_combinar(folder_path)
+df
+```
+
+
+```{r}
+```
+

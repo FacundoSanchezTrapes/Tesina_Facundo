@@ -1,0 +1,95 @@
+
+
+```{r}
+# Load required library
+library(bio3d)
+library(tidyverse)
+```
+```{r}
+# Function to extract PDB ID and beta column from a PDB file
+extract_beta_from_pdb <- function(file_path) {
+  # Read PDB file
+  pdb_data <- read.pdb(file_path,multi=TRUE,rm.insert = TRUE)
+  #print(pdb_data)
+  # Extract PDB ID
+  #ID<-file_path
+  pdb_B <- pdb_data$atom[13]
+  #print(pdb_B)
+  #uni_id<-
+  # Extract beta column
+  #beta <- pdb_data$atom$beta
+  #print(ID)
+  # Return PDB ID and beta as a data frame
+  return(data.frame(plddt=pdb_B))
+}
+```
+
+```{r}
+extract_name_pdb<- function(file_path) {
+pdb_name <- read.pdb(file_path,multi = TRUE,rm.insert = TRUE)
+#print(pdb_name)
+#atoms<-pdb_name$atom
+#amino_atoms<-atoms[atoms$elety=="ATOM",pdb_name]
+num_aa<-length(unique(pdb_name$atom$resno))
+archivo.pdb=file_path
+#num_aa<-length(pdb_name$atom$pdbindex)
+#print(num_aa)
+repetir_nombres<-rep(paste(archivo.pdb,sep=""),times = num_aa)
+print(repetir_nombres)
+vector_nombres<-as.vector(repetir_nombres)
+}
+
+```
+
+```{r}
+# Function to read all PDB files in a folder and combine the data
+read_pdbs_and_combine <- function(folder_path) {
+  # Get a list of all PDB files in the folder
+  pdb_files <- list.files(folder_path,pattern = ".pdb$", full.names = TRUE)
+  #print((pdb_files))
+  #vector_protes<-c(pdb_files)
+  # Initialize an empty list to store the extracted data
+  data_list <- list()
+ 
+  #print(folder_path)
+  # Loop through each PDB file and extract the data
+  for (i in pdb_files) {
+   #print(i)
+    data_list[[i]] <- extract_beta_from_pdb(i)
+    }
+  
+  # Combine all data frames into a single data frame
+  combined_data <- do.call(rbind, data_list)
+  
+  return(combined_data)
+}
+  
+```
+```{r}
+pepe <- function(folder_path) {
+  pdb_files <- list.files(folder_path,pattern = ".pdb$", full.names = TRUE)
+  lista_nombres <-list()
+
+  for (i in pdb_files) {
+ #print(i)
+  lista_nombres[[i]]<-extract_name_pdb(i)
+}
+
+}
+```
+
+```{r}
+# Replace 'path/to/your/folder' with the actual path to the folder containing your PDB files
+folder_path <- "C://tablas_tesina//popote//"
+df<-read_pdbs_and_combine(folder_path)
+df
+datafreim<-pepe(folder_path)
+datafreim
+
+
+
+# Suponiendo que tu DataFrame se llama "mi_df" y lo quieres guardar como "datos.tsv"
+#write.table(df, file = "C://tablas_tesina//plddt.tsv", sep = "\t", row.names = FALSE)
+```
+
+

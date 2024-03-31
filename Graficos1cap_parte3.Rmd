@@ -1,0 +1,136 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+installed.packages("hrbrthemes")
+installed.packages("viridis")
+library(hrbrthemes)
+library(viridis)
+
+library(ggpubr)
+```
+
+```{r}
+energia_pLDDT_RSA <- read_csv("C:/tablas_tesina/1er capitulo/energia_pLDDT_RSA.csv")
+```
+
+```{r}
+Prot_nean_desor<-subset(energia_pLDDT_RSA,subset = energia_pLDDT_RSA$pLDDT_mut_nean_tot<50)
+
+Prot_nean_or<-subset(energia_pLDDT_RSA,subset = energia_pLDDT_RSA$pLDDT_mut_nean_tot>50)
+
+
+```
+
+
+```{r}
+or_desor<-rep("desordenada",252)
+or_desor<-as.vector(or_desor)
+Prot_nean_desor<-cbind(Prot_nean_desor,or_desor)
+or_desor<-rep("ordenada",374)
+or_desor<-as.vector(or_desor)
+
+Prot_nean_or<-cbind(Prot_nean_or,or_desor)
+```
+
+
+```{r}
+datos_combinados <- rbind(Prot_nean_or, Prot_nean_desor)
+
+```
+
+```{r}
+ordenadas<-Prot_nean_or$energia_normalizada_tot
+desordenadas<-Prot_nean_desor$energia_normalizada_tot
+wil_test_or_desor<-wilcox.test(desordenadas,ordenadas , paired = FALSE)
+
+ord_desord_energia<-ggplot(data=datos_combinados)+aes(x=or_desor, y=energia_normalizada_tot,fill="black")+geom_boxplot(fill="red")+ xlab("Orden de la proteína") + ylab("ΔΔG") + geom_text(x=1.5,y=7,label = paste("p-valor:", format.pval(wil_test_or_desor$p.value, digits = 3)))
+
+
+
+ggsave("C://tesina//Graficos//1er capitulo//boxplot_ord_desord_energia3.png", plot = ord_desord_energia, width = 8, height = 6)
+
+
+ord_desord_energia
+```
+
+
+
+```{r}
+
+energia_pLDDT_RSA$categoria_RSA <- ifelse(energia_pLDDT_RSA$RSA > 25, "Exposed", "Buried")
+
+energia_pLDDT_RSA$categoria_pLDDT <- ifelse(energia_pLDDT_RSA$pLDDT_mut_nean_tot > 50, "Ordenada", "Desordenada")
+
+
+cor_plRSA<-cor.test(energia_pLDDT_RSA$RSA,energia_pLDDT_RSA$pLDDT_mut_nean_tot,method = "pearson")
+
+j<-ggplot(energia_pLDDT_RSA, aes(x=RSA, y=pLDDT_mut_nean_tot,color=categoria_RSA,shape=categoria_pLDDT)) + 
+  geom_point(size=1) 
+ji<-j + labs(title = "RSA vs pLDDT",x = "RSA", y = "pLDDT") +
+  annotate("text", x = Inf, y = -Inf, 
+             label = paste("r =", round(cor_plRSA$estimate, 2), "p =", signif(cor_plRSA$p.value, 3)),
+             hjust = 1, vjust = -5,
+             size = 3) 
+  
+
+ji
+ggsave("C://tesina//Graficos//1er capitulo//RSA_vs_pLDDT1.png", plot = ji, width = 8, height = 6)
+cor_plRSA
+```
+
+
+```{r}
+Prot_nean_buried<-subset(energia_pLDDT_RSA,subset = energia_pLDDT_RSA$RSA<25)
+#view(Prot_nean_buried)
+Prot_nean_exposed<-subset(energia_pLDDT_RSA,subset = energia_pLDDT_RSA$RSA>25)
+#view(Prot_nean_exposed)
+```
+
+```{r}
+bur_exp<-rep("exposed",501)
+bur_exp<-as.vector(bur_exp)
+Prot_nean_exp<-cbind(Prot_nean_exposed,bur_exp)
+bur_exp<-rep("buried",125)
+bur_exp<-as.vector(bur_exp)
+
+Prot_nean_bur<-cbind(Prot_nean_buried,bur_exp)
+```
+
+```{r}
+datos_combinados_RSA <- rbind(Prot_nean_bur, Prot_nean_exp)
+datos_combinados_RSA
+```
+
+
+```{r}
+buried<-Prot_nean_bur$energia_normalizada_tot
+exposed<-Prot_nean_exp$energia_normalizada_tot
+wil_test_bur_exp<-wilcox.test(buried,exposed , paired = FALSE)
+
+boxplot_bur_exp_energia<-ggplot(data=datos_combinados_RSA)+aes(x=bur_exp, y=energia_normalizada_tot,fill="white") + xlab("Exposición de la proteína") + ylab("ΔΔG") + geom_boxplot(fill="red")  + geom_text(x=1.5,y=7,
+label = paste("p-valor:", format.pval(wil_test_bur_exp$p.value, digits = 3))  # Texto que mostrará el p-valor
+  )
+# label = paste("r =", round(cor_RSA$estimate, 2), "\n", "p =", signif(cor_RSA$p.value, 3)),
+#    hjust = 1, vjust = -1,
+#    size = 5 )
+
+boxplot_bur_exp_energia
+ggsave("C://tesina//Graficos//1er capitulo//boxplot_bur_exp_energia2.png", plot =boxplot_bur_exp_energia , width = 8, height = 6)
+
+
+```
+
+
+
+
+```{r}
+muy_desestabilizantes<-subset(energia_pLDDT_RSA,subset=energia_pLDDT_RSA$energia_normalizada_tot>1)
+view(muy_desestabilizantes)
+```
+
+

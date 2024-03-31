@@ -1,0 +1,110 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+# Install core Bioconductor packages
+if (!requireNamespace("BiocManager"))
+    install.packages("BiocManager")
+BiocManager::install()
+# Install package dependencies
+BiocManager::install("Biostrings")
+BiocManager::install("biomaRt")
+
+install.packages("biomartr", dependencies = TRUE)
+
+```
+
+```{r}
+library(BiocManager)
+library(Biostrings)
+library(biomaRt)
+library(biomartr)
+```
+
+
+
+```{r}
+# show all elements of the data.frame
+options(tibble.print_max = Inf)
+# search for GO terms of an example Homo sapiens gene
+GO_tbl <- biomartr::getGO(organism = "Homo sapiens", 
+                          genes    = "GUCA2A",
+                          filters  = "hgnc_symbol")
+
+GO_tbl
+```
+
+```{r}
+# list all available databases
+biomartr::getMarts()
+```
+```{r}
+list(biomartr::getDatasets(mart = "ENSEMBL_MART_ENSEMBL") , 5)
+tail(biomartr::getDatasets(mart = "ENSEMBL_MART_ENSEMBL") , 38)
+```
+
+```{r}
+# show all elements of the data.frame
+options(tibble.print_max = Inf)
+# list all available attributes for dataset: hsapiens_gene_ensembl
+list( biomartr::getAttributes(mart    = "ENSEMBL_MART_ENSEMBL", 
+                              dataset = "hsapiens_gene_ensembl"), 10 )
+```
+
+```{r}
+# show all elements of the data.frame
+options(tibble.print_max = Inf)
+# list all available filters for dataset: hsapiens_gene_ensembl
+head( biomartr::getFilters(mart    = "ENSEMBL_MART_ENSEMBL", 
+                           dataset = "hsapiens_gene_ensembl"), 10 )
+```
+
+```{r}
+# show all elements of the data.frame
+options(tibble.print_max = Inf)
+# retrieving all available datasets and biomart connections for
+# a specific query organism (scientific name)
+biomartr::organismBM(organism = "Homo sapiens")
+```
+
+```{r}
+# show all elements of the data.frame
+options(tibble.print_max = Inf)
+# return available attributes for "Homo sapiens"
+head(biomartr::organismAttributes("Homo sapiens"), 20)
+```
+
+
+```{r}
+species <- "hsapiens"
+
+
+# Obtener la anotación funcional para un conjunto de genes
+# En este ejemplo, obtendremos anotaciones para genes con IDs "ENSG00000157764" y "ENSG00000124664"
+gene_ids <- c("ENSG00000157764", "ENSG00000124664")
+
+# Obtener anotaciones funcionales usando biomartr
+getBM(attributes = c("affy_hg_u95av2", "hgnc_symbol", "chromosome_name", "band"),
+        filters    = "affy_hg_u95av2",
+        values     = c("1939_at","1503_at","1454_at"), 
+        mart       = mart)
+  
+
+# Ver las anotaciones funcionales
+
+```
+
+```{r}
+browseVignettes("biomaRt
+```
+
+
+
+
+
+
+
+
+

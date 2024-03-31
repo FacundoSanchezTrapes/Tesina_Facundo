@@ -1,0 +1,182 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r}
+pLDDT_energia_mut_nean_ai <- read_csv("C:/tablas_tesina/1er capitulo/parte_ai", 
+    col_names = FALSE)
+#View(pLDDT_energia_mut_nean_aa)
+```
+
+```{r}
+Residuo<-c("ALA","ARG","ASN","ASP","CYS","GLU","GLN","GLY","HIS","ILE","LEU","LYS","MET","PHE","PRO","SER","THR","TRP","TYR","VAL")
+```
+```{r}
+Res<-c("A","R","N","D","C","E","Q","G","H","I","L","K","M","F","P","S","T","W","Y","V")
+```
+
+```{r}
+max_asa<-c(121,265,187,187,148,214,214,97,216,195,191,230,203,228,154,143,163,264,255,165)
+```
+
+```{r}
+df_maxasa <- data.frame(Residuo,Res,max_asa)
+print(df_maxasa)
+
+```
+
+```{r}
+resultadosdssp9 <- read_delim("C:/tablas_tesina/1er capitulo/resultadosdssp9", 
+    delim = "\t", escape_double = FALSE, 
+    col_names = FALSE, trim_ws = TRUE)
+#view(resultadosAFdssp)
+```
+```{r}
+colnames(pLDDT_energia_mut_nean_ai)[colnames(pLDDT_energia_mut_nean_ai) == "X1"] <- "nro_prote"
+colnames(pLDDT_energia_mut_nean_ai)[colnames(pLDDT_energia_mut_nean_ai) == "X2"] <- "Uniprot_ID"
+colnames(pLDDT_energia_mut_nean_ai)[colnames(pLDDT_energia_mut_nean_ai) == "X3"] <- "Posicion_mut"
+colnames(pLDDT_energia_mut_nean_ai)[colnames(pLDDT_energia_mut_nean_ai) == "X4"] <- "AA_humano"
+colnames(pLDDT_energia_mut_nean_ai)[colnames(pLDDT_energia_mut_nean_ai) == "X5"] <- "AA_neanderthal"
+colnames(pLDDT_energia_mut_nean_ai)[colnames(pLDDT_energia_mut_nean_ai) == "X6"] <- "cambio_energia"
+colnames(pLDDT_energia_mut_nean_ai)[colnames(pLDDT_energia_mut_nean_ai) == "X7"] <- "energia_normalizada_tot"
+colnames(pLDDT_energia_mut_nean_ai)[colnames(pLDDT_energia_mut_nean_ai) == "X8"] <- "pLDDT_mut_nean_tot"
+
+
+```
+
+```{r}
+colnames(resultadosdssp9)[colnames(resultadosdssp9) == "X1"] <- "Uniprot_ID"
+colnames(resultadosdssp9)[colnames(resultadosdssp9) == "X2"] <- "Posicion"
+colnames(resultadosdssp9)[colnames(resultadosdssp9) == "X3"] <- "cadena"
+colnames(resultadosdssp9)[colnames(resultadosdssp9) == "X4"] <- "AA"
+colnames(resultadosdssp9)[colnames(resultadosdssp9) == "X5"] <- "DSSP"
+#view(resultadosdssp1)
+#write.csv(pLDDT_protes,"C://tablas_tesina//1er capitulo//deltadeltaG_neandertal")
+```
+
+
+
+
+```{r}
+
+extaer_dssp_mutacion <- function(df1, df2) {
+  dssp_mutacion <- vector("numeric", length = nrow(df1))  # Vector para almacenar los resultados
+  
+  for (i in 1:nrow(df1)) {
+    string1 <- df1[i, "Uniprot_ID"]
+    numero1 <- df1[i, "Posicion_mut"]
+    print(paste("esto es string 1 y numero1",numero1,string1))
+   
+        if (is.na(numero1)) {
+      print(paste("Advertencia: En la iteración", i, "hay valor NA en 'Posicion_mut'. Continuando el loop..."))
+      next  # Continúa con la siguiente iteración del loop
+              }
+  for (j in 1:nrow(df2)) {
+      numero2 <- df2[j, "Posicion"]
+       if (is.na(numero2)) {
+        print(paste("Advertencia: En la iteración", i, "hay valor NA en 'Posicion' en df2. Continuando el loop..."))
+        next  # Continúa con la siguiente iteración del loop
+      }
+               #print(paste("esto es numero2",numero2))
+      if (numero1 == numero2) {
+        string2 <- df2[j, "Uniprot_ID"]
+        print(paste("esto es string 2",string2))
+        # Si los strings coinciden, compara los números
+        if (string1 == string2) {
+           dssp_mutacion[i] <- df2[j, "DSSP"]
+          print(dssp_mutacion)
+          break  # Si hay una coincidencia, detener la búsqueda para este i
+              }
+         }
+      }
+  }
+  
+  return(dssp_mutacion)
+}
+
+```
+
+```{r}
+DSSP_mut9<-extaer_dssp_mutacion(pLDDT_energia_mut_nean_ai,resultadosdssp9)
+DSSP_mutag<-as.numeric(DSSP_mut9)
+
+```
+
+
+```{r}
+DSSP_mut_tot<-c(DSSP_mut,DSSP_mut2,DSSP_mut3,DSSP_mut4,DSSP_mut5,DSSP_mut6,DSSP_mut7,DSSP_mut8,DSSP_mut9)
+DSSP_mut_tot<-as.numeric(DSSP_mut_tot)
+```
+
+```{r}
+energia_pLDDT_acc<-cbind(pLDDT_energia_mut_nean_tot,DSSP_mut_tot)
+```
+
+```{r}
+energia_pLDDT_acc_aa<-merge(energia_pLDDT_acc,df_maxasa,by.x = "AA_humano",by.y = "Res")
+view(energia_pLDDT_acc_aa)
+```
+
+```{r}
+RSA <- numeric(length = length(energia_pLDDT_acc_aa$max_asa))
+ for ( i in 1:length(energia_pLDDT_acc_aa$DSSP_mut_tot)){
+      acc<- energia_pLDDT_acc_aa[i, "DSSP_mut_tot"]
+      max_acc<- energia_pLDDT_acc_aa[i, "max_asa"]
+      kk[i]<-paste(acc,max_acc)
+      
+      
+      RSA[i]<-(acc/max_acc)*100
+       
+      
+ }
+view(RSA)
+
+```
+
+```{r}
+energia_pLDDT_rsa<-cbind(energia_pLDDT_acc_aa,RSA)
+view(energia_pLDDT_rsa)
+write.csv(energia_pLDDT_rsa,"C://tablas_tesina//1er capitulo//energia_pLDDT_RSA.csv")
+```
+
+```{r}
+distribucion_RSA<-ggplot(data=energia_pLDDT_RSA)+aes(x=RSA) +xlab("RSA") +geom_density(fill="red")
+distribucion_RSA
+ggsave("C://tesina//Graficos//1er capitulo//graf_densidad_rsa1.png", plot = distribucion_rsa, width = 8, height = 6)
+
+```
+
+```{r}
+cor_RSA<-cor.test(datos_combinados$energia_normalizada_tot,datos_combinados$RSA,method = "pearson")
+
+DeltaGvsRSA<-ggplot(energia_pLDDT_RSA, aes(x=energia_normalizada_tot, y=RSA)) +xlab("ΔΔG") +ylab("RSA") + 
+    geom_point(color="red")+geom_text( x = Inf, y = -Inf, 
+    label = paste("r =", round(cor_RSA$estimate, 2), "\n", "p =", signif(cor_RSA$p.value, 3)),
+    hjust = 1, vjust = -4,
+    size = 5
+  )
+DeltaGvsRSA
+ggsave("C://tesina//Graficos//1er capitulo//DeltaGvsRSA3.png", plot = DeltaGvsRSA, width = 8, height = 6)
+cor_RSA
+```
+
+```{r}
+
+
+
+
+```
+
+```{r}
+
+```
+
+
+
+

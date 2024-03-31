@@ -1,0 +1,228 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+```
+
+```{r}
+culazo_ak <- read_table("C:/tablas_tesina/1er capitulo/culazo_ak", 
+    col_names = FALSE)
+#view(culazo_ab)
+```
+
+
+```{r}
+colnames(culazo_ak)[colnames(culazo_ak) == "X1"] <- "Uniprot_ID"
+colnames(culazo_ak)[colnames(culazo_ak) == "X3"] <- "num_atomo_CA"
+colnames(culazo_ak)[colnames(culazo_ak) == "X5"] <- "AA"
+colnames(culazo_ak)[colnames(culazo_ak) == "X7"] <- "Posicion"
+colnames(culazo_ak)[colnames(culazo_ak) == "X12"] <- "pLDDT"
+#view(culazo_ab)
+
+columnas_seleccionadas<-c("Uniprot_ID","num_atomo_CA","AA","Posicion","pLDDT")
+pLDDT_protes_ak<-culazo_ak[,columnas_seleccionadas]
+#write.csv(pLDDT_protes,"C://tablas_tesina//1er capitulo//pLDDT_protes")
+```
+
+```{r}
+tabla_energia_filtrada_ak <- read_table("C:/tablas_tesina/1er capitulo/particion_energia_ak", 
+    col_names = FALSE)
+#View(tabla_energia_filtrada_ab)
+```
+
+```{r}
+colnames(tabla_energia_filtrada_ak)[colnames(tabla_energia_filtrada_ak) == "X1"] <- "Uniprot_ID"
+colnames(tabla_energia_filtrada_ak)[colnames(tabla_energia_filtrada_ak) == "X2"] <- "Posicion"
+colnames(tabla_energia_filtrada_ak)[colnames(tabla_energia_filtrada_ak) == "X3"] <- "AA_humano"
+colnames(tabla_energia_filtrada_ak)[colnames(tabla_energia_filtrada_ak) == "X4"] <- "AA_neanderthal"
+colnames(tabla_energia_filtrada_ak)[colnames(tabla_energia_filtrada_ak) == "X5"] <- "cambio_energia"
+#view(tabla_energia_filtrada)
+#write.csv(pLDDT_protes,"C://tablas_tesina//1er capitulo//deltadeltaG_neandertal")
+```
+
+
+
+```{r}
+energia_normalizada_tot <- (tabla_energia_filtrada_tot$cambio_energia +0.078)/1.14
+```
+```{r}
+tabla_energia_normalizada_ak<-cbind(tabla_energia_filtrada_ak,energia_normalizada_ak)
+#view(tabla_energia_normalizada_ab)
+```
+
+```{r}
+# Make the histogram
+#grafi_energia_normalizada<-
+graf_energianormalizada<-ggplot(data=energia_pLDDT_RSA,aes(x=energia_normalizada_tot)) + xlab("ΔΔG") +
+    geom_density(fill="#AE0000", color="#e9ecef", alpha=0.8) 
+    +labs(title = "Gráfico densidad DeltaG") 
+ggsave("C://tesina//Graficos//1er capitulo//graf_energianormalizada3.png", plot = graf_energianormalizada, width = 8, height = 6)
+graf_energianormalizada
+```
+
+```{r}
+graf_energia<-ggplot(data=tabla_energia_filtrada,aes(x=cambio_energia)) +
+    geom_density(fill="#AE1041", color="#e9ecef", alpha=0.8)
+graf_energia+labs(title = "Gráfico densidad DeltaG",
+                    caption = "Facundo Sanchez Trapes",
+                    x="ΔG")
+ggsave("C://tesina//Graficos//1er capitulo//graf_energia.png", plot = graf_energia, width = 8, height = 6)
+```
+
+```{r}
+pLDDT_resumido_protes <- pLDDT_protes %>%
+  group_by(Uniprot_ID) %>%
+  summarize(repeticiones = n())
+
+```
+
+```{r}
+
+# Usar distinct() para obtener valores únicos en la columna
+pLDDT_resumido_protes <- pLDDT_protes %>%
+  distinct(Uniprot_ID)
+
+# Ver el resultado
+print(pLDDT_resumido_protes)
+```
+
+
+
+
+```{r}
+
+extaer_plddt_mutacion <- function(df1, df2) {
+  pLDDT_mutacion <- vector("numeric", length = nrow(df1))  # Vector para almacenar los resultados
+  
+  for (i in 1:nrow(df1)) {
+    string1 <- df1[i, "Uniprot_ID"]
+    numero1 <- df1[i, "Posicion_mut"]
+    print(paste("esto es string 1 y numero1",numero1,string1))
+   
+        if (is.na(numero1)) {
+      print(paste("Advertencia: En la iteración", i, "hay valor NA en 'Posicion_mut'. Continuando el loop..."))
+      next  # Continúa con la siguiente iteración del loop
+              }
+  for (j in 1:nrow(df2)) {
+      numero2 <- df2[j, "Posicion"]
+       if (is.na(numero2)) {
+        print(paste("Advertencia: En la iteración", i, "hay valor NA en 'Posicion' en df2. Continuando el loop..."))
+        next  # Continúa con la siguiente iteración del loop
+      }
+               #print(paste("esto es numero2",numero2))
+      if (numero1 == numero2) {
+        string2 <- df2[j, "Uniprot_ID"]
+        print(paste("esto es string 2",string2))
+        # Si los strings coinciden, compara los números
+        if (string1 == string2) {
+           pLDDT_mutacion[i] <- df2[j, "pLDDT"]
+          print(pLDDT_mutacion)
+          break  # Si hay una coincidencia, detener la búsqueda para este i
+              }
+         }
+      }
+  }
+  
+  return(pLDDT_mutacion)
+}
+
+```
+
+```{r}
+pLDDT_mut_ak<-extaer_plddt_mutacion(tabla_energia_normalizada_ak,pLDDT_protes_ak)
+
+```
+
+```{r}
+pLDDT_mut_ak1<-as.numeric(pLDDT_mut_ak)
+view(pLDDT_mut_ak1)
+#pLDDT_mut_af1 <- replace(pLDDT_mut_af1,15, 51.37)
+write.csv(pLDDT_mut_aj1,"C://tablas_tesina//1er capitulo//pLDDTmut_aj1")
+```
+
+```{r}
+pLDDTmut_aa <- read_csv("C:/tablas_tesina/1er capitulo/pLDDTmut_aa")
+pLDDTmut_ab <- read_csv("C:/tablas_tesina/1er capitulo/pLDDTmut_ab1")
+pLDDTmut_ac <- read_csv("C:/tablas_tesina/1er capitulo/pLDDTmut_ac1")
+pLDDTmut_ad <- read_csv("C:/tablas_tesina/1er capitulo/pLDDTmut_ad1")
+pLDDTmut_ae <- read_csv("C:/tablas_tesina/1er capitulo/pLDDTmut_ae1")
+pLDDTmut_af <- read_csv("C:/tablas_tesina/1er capitulo/pLDDTmut_af1")
+pLDDTmut_ag <- read_csv("C:/tablas_tesina/1er capitulo/pLDDTmut_ag1")
+pLDDTmut_aa <- read_csv("C:/tablas_tesina/1er capitulo/pLDDTmut_ah1")
+pLDDTmut_ah <- read_csv("C:/tablas_tesina/1er capitulo/pLDDTmut_ah1")
+pLDDTmut_ai <- read_csv("C:/tablas_tesina/1er capitulo/pLDDTmut_ai1")
+pLDDTmut_aj <- read_csv("C:/tablas_tesina/1er capitulo/pLDDTmut_aj1")
+pLDDTmut_ak <- read_csv("C:/tablas_tesina/1er capitulo/pLDDTmut_ak1")
+
+pLDDTmut_ad$x<-replace(pLDDTmut_ad$x,7, 33.31)
+
+pLDDT_mut_nean_tot<-c(pLDDTmut_aa$x,pLDDTmut_ab$x,pLDDTmut_ac$x,pLDDTmut_ad$x,pLDDTmut_ae$x,pLDDTmut_af$x,pLDDTmut_ag$x,pLDDTmut_ah$x,pLDDTmut_ai$x,pLDDTmut_aj$x,pLDDTmut_ak$x)
+view(pLDDT_mut_nean_tot)
+#write.csv(pLDDT_mut_nean_tot,"C://tablas_tesina//1er capitulo//pLDDTmut_mut_nean_tot")
+
+```
+
+```{r}
+tabla_energia_filtrada_tot <- read_table("C:/tablas_tesina/1er capitulo/tabla_energia_filtrada", 
+    col_names = FALSE)
+colnames(tabla_energia_filtrada_tot)[colnames(tabla_energia_filtrada_tot) == "X1"] <- "Uniprot_ID"
+colnames(tabla_energia_filtrada_tot)[colnames(tabla_energia_filtrada_tot) == "X2"] <- "Posicion_mut"
+colnames(tabla_energia_filtrada_tot)[colnames(tabla_energia_filtrada_tot) == "X3"] <- "AA_humano"
+colnames(tabla_energia_filtrada_tot)[colnames(tabla_energia_filtrada_tot) == "X4"] <- "AA_neanderthal"
+colnames(tabla_energia_filtrada_tot)[colnames(tabla_energia_filtrada_tot) == "X5"] <- "cambio_energia"
+
+energia_normalizada_tot <- (tabla_energia_filtrada_tot$cambio_energia +0.078)/1.14
+energia_normalizada_tot<-as.numeric(energia_normalizada_tot)
+view(energia_normalizada_tot)
+tabla_energia_normalizada<-cbind(tabla_energia_filtrada_tot,energia_normalizada_tot)
+view(tabla_energia_normalizada)
+
+mut_energia_pLDDT_norm_tot<-cbind(tabla_energia_normalizada,pLDDT_mut_nean_tot)
+view(mut_energia_pLDDT_norm_tot)
+write.csv(mut_energia_pLDDT_norm_tot,"C://tablas_tesina//1er capitulo//pLDDT_energia_mut_nean_tot")
+```
+
+
+```{r}
+cor_pLDDT<-cor.test(datos_combinados$energia_normalizada_tot,datos_combinados$pLDDT_mut_nean_tot,method = "pearson")
+cambio_energiavspLDDT<-ggplot(energia_pLDDT_RSA, aes(x=energia_normalizada_tot, y=pLDDT_mut_nean_tot)) + xlab("ΔΔG") + ylab("pLDDT") + geom_point(
+        color="red",
+        fill="red",
+        shape=16,
+        alpha=0.5,
+        size=2
+        )+geom_text( x = Inf, y = -Inf, 
+    label = paste("r =", round(cor_pLDDT$estimate, 2), "\n", "p =", signif(cor_pLDDT$p.value, 3)),
+    hjust = 1, vjust = -1,
+    size = 5
+  )
+ggsave("C://tesina//Graficos//1er capitulo//graf_energia_vs_pLDDT2.png", plot = cambio_energiavspLDDT, width = 8, height = 6)
+
+cambio_energiavspLDDT
+
+```
+
+
+```{r}
+densidad_DeltaG<-ggplot(data=mut_energia_pLDDT_norm_tot)+aes(x=energia_normalizada_tot)+geom_density(fill="#AE1041")
+densidad_DeltaG+labs(title = "Gráfico densidad DeltaG",
+                    caption = "Facundo Sanchez Trapes",
+                    x="ΔG")
+```
+
+
+
+
+```{r}
+densidad_pLDDT<-ggplot(data=energia_pLDDT_RSA)+aes(x=pLDDT_mut_nean_tot)+geom_density(fill="#AE0500")
+densidad_pLDDT1<-densidad_pLDDT+ xlab("pLDDT") +labs(title = "Gráfico densidad pLDDT",caption = "Facundo Sanchez Trapes")
+ggsave("C://tesina//Graficos//1er capitulo//graf_densidad_pLDDT2.png", plot = densidad_pLDDT1, width = 8, height = 6)
+
+
+```
+

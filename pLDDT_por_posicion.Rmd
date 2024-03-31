@@ -1,0 +1,200 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+```
+
+
+```{r}
+df1_pLDDT<-as.data.frame(df_pLDDT)# Convertir la columna Proteina de tipo lista a cadena
+df1_pLDDT$Proteina <- sapply(df1_pLDDT$Proteina, paste, collapse = ", ")
+```
+
+
+```{r}
+# Realizar la unión basada en las columnas modificadas
+mutaciones_pLDDT <- merge(df1_pLDDT, mutaciones_data, by.x = "Proteina", by.y = "Entry")
+
+view(mutaciones_pLDDT)
+```
+
+
+```{r}
+
+#write.csv(df_pLDDT, "C://tablas_tesina//1er capitulo//mutaciones_pLDDT", row.names = FALSE)
+
+
+
+```
+
+```{r}
+dim(df1_pLDDT)
+
+```
+
+```{r}
+df_pLDDT$valor_numerico <- as.numeric(gsub("\\((.*?)\\)", "\\1", df_pLDDT$pLDDT))
+view(df_pLDDT)
+```
+
+
+```{r}
+numeric_vectors <- list()
+df_pLDDT2<-as.list(df1_pLDDT$pLDDT)
+# Loop a través de cada fila de la columna pLDDT en df_pLDDT
+for (i in (df_pLDDT2)) {
+  # Obtener el valor de la fila actual y convertirlo a una cadena de caracteres
+  pLDDT_string <- as.character(df_pLDDT2$pLDDT[i])
+  
+  # Obtener el valor de la fila actual y convertirlo a un vector numérico
+  numeric_vector <- as.numeric(unlist(strsplit(df_pLDDT2$pLDDT[i], "," )))
+  
+  # Agregar el vector numérico a la lista
+  numeric_vectors[[i]] <- numeric_vector
+}
+
+# Verificar la lista de vectores numéricos
+str(numeric_vectors)
+view(df_pLDDT2)
+```
+```{r}
+# Initialize an empty list to store the numeric vectors
+#numeric_vectors <- list()
+
+# Loop through each line and convert it to a numeric vector
+#for (line in df_pLDDT$pLDDT) {
+#  numeric_vectors <- c(df_pLDDT$pLDDT, list(eval(parse(text = line))))
+#}
+#view(numeric_vectors)
+```
+
+```{r}
+# Especificar el índice de la columna que deseas convertir a integer
+col_idx <- 2
+
+# Convertir los vectores de character a enteros en la columna
+df_pLDDT[, col_idx] <- lapply(df_pLDDT[, col_idx], function(x) as.integer(x))
+print(df_pLDDT)
+```
+
+
+```{r}
+#df_pLDDT$pLDDT<-gsub("\n","",df_pLDDT$pLDDT)
+#view(df_pLDDT)
+df_pLDDT$pLDDT<-sub("$`C://tablas_tesina//popote//.*","",df_pLDDT$pLDDT)
+view(df_pLDDT)
+df_pLDDT$pLDDT<-sub("[1]","",df_pLDDT$pLDDT)
+df_pLDDT$pLDDT<-sub(" ","",df_pLDDT$pLDDT)
+#df_pLDDT$pLDDT<-as.integer(df1_pLDDT$pLDDT)
+
+#mutaciones_pLDDT$pLDDT <- as.numeric(unlist(strsplit(mutaciones_pLDDT$pLDDT, ", ")))
+
+view(df_pLDDT)
+```
+
+```{r}
+
+
+valores_no_numericos <- mutaciones_pLDDT$pLDDT[!grepl("^\\d+$", mutaciones_pLDDT$pLDDT)]
+valores_no_numericos
+```
+
+
+```{r}
+valores_pLDDT<-unique(df_pLDDT$pLDDT)
+valores_pLDDT
+#as.numeric(valores_pLDDT)
+#valores_pLDDT_conteo<-table(valores_pLDDT)
+valores_pLDDT
+as.character(df_pLDDT$pLDDT)
+```
+
+
+```{r}
+mutaciones_pLDDT$pLDDT <- as.integer(ifelse(grepl("^\\d+$", mutaciones_pLDDT$pLDDT), mutaciones_pLDDT$pLDDT, NA))
+
+mutaciones_pLDDT
+```
+
+
+
+
+```{r}
+#read.csv("C:\tablas_tesina\1er capitulo\mutaciones_pLDDT.csv",col_types = cols(.default = "?", pLDDT = integer))
+
+
+
+for (i in mutaciones_pLDDT$pLDDT) {
+  mutate(mutaciones_pLDDT$pLDDT<- parse_integer(mutaciones_pLDDT$pLDDT))
+}
+
+view(mutaciones_pLDDT)
+
+mutaciones_pLDDT <- mutaciones_pLDDT %>%
+  mutate(mutaciones_pLDDT$pLDDT<- parse_integer(mutaciones_pLDDT$pLDDT))
+
+
+```
+
+
+```{r}
+  
+
+for (i in mutaciones_pLDDT) {
+  indice <- mutaciones_pLDDT$Protein_position 
+  #print(indice)
+  pLDDT_de_mutacion <- mutaciones_pLDDT$pLDDT[[1]][indice]
+  #print(pLDDT_de_mutacion)
+  return(pLDDT_de_mutacion)
+}
+  
+```
+
+
+
+```{r}
+# Assuming beta is a vector in R
+pLDDT_mut <- function(Posicion, beta) {
+  better_than2 <- Posicion
+  beta[better_than2]
+}
+
+
+
+
+
+
+# Usage example
+result <- pLDDT_mut(mutaciones_pLDDT$Protein_position, mutaciones$pLDDT)
+```
+
+
+
+```{r}
+# Primero, convierte los closures a listas.
+#df_pLDDT$pLDDT <- lapply(df_pLDDT$pLDDT, as.list)
+
+# Luego, convierte los elementos de las listas a numéricos.
+#df_pLDDT$pLDDT <- lapply(df_pLDDT$pLDDT, lapply, as.numeric)
+#view(df_pLDDT)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

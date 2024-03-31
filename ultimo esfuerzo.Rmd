@@ -1,0 +1,166 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+Genome_VEP_Nearnental <- read_delim("C:/tablas_tesina/Genome_VEP_Nearnental.tsv", 
+    delim = "\t", escape_double = FALSE, 
+    trim_ws = TRUE)
+```
+
+```{r}
+mut_nean_sin<-subset(Genome_VEP_Nearnental,Consequence=="SYNONYMOUS_CODING")
+
+```
+
+```{r}
+
+vector_nombre_genes_sin<-subset(mut_nean_sin,select = Feature)
+
+write.csv(vector_nombre_genes_sin, file = "C://tablas_tesina//1er capitulo//vectornombregenes_sin1.csv", row.names = FALSE)
+
+```
+
+```{r}
+protes_genes <- read_delim("C:/tablas_tesina/1er capitulo/mut_sin.tsv", 
+    delim = "\t", escape_double = FALSE, 
+    trim_ws = TRUE)
+view(protes_genes)
+```
+
+```{r}
+vepcompleto<-merge(mut_nean_sin,protes_genes,by.x = "Feature",by.y = "From")
+view(vepcompleto)
+```
+
+```{r}
+nean_sin_amy<-merge(kungfu_amy,vepcompleto,by.x = "uniprot_id",by.y = "Entry")
+view(nean_sin_amy)
+```
+
+
+```{r}
+write.csv(mut_nean_sin,"C://tablas_tesina//1er capitulo//mut_nean_sin")
+```
+
+```{r}
+Residuo<-c("ALA","ARG","ASN","ASP","CYS","GLU","GLN","GLY","HIS","ILE","LEU","LYS","MET","PHE","PRO","SER","THR","TRP","TYR","VAL")
+```
+```{r}
+Res<-c("A","R","N","D","C","E","Q","G","H","I","L","K","M","F","P","S","T","W","Y","V")
+```
+
+```{r}
+max_asa<-c(121,265,187,187,148,214,214,97,216,195,191,230,203,228,154,143,163,264,255,165)
+```
+
+```{r}
+df_maxasa <- data.frame(Residuo,Res,max_asa)
+print(df_maxasa)
+
+```
+
+```{r}
+for (amin in Q08431$ACC) {
+   string1 <- Q08431[i, "ACC"]
+    string2 <- df_maxasa[i, "mas_asa"]
+  if (string1 == string2) {
+           Q08431$RSA<-(Q08431$X5/df_maxasa$max_asa)*100
+  }
+}
+view(Q08431)
+```
+
+
+
+```{r}
+merged_df <- merge(Q08431, df_maxasa, by.x = "ACC", by.y = "Res", all = TRUE)
+
+# Calcular RSA utilizando la operación matemática en todo el DataFrame
+merged_df$RSA <- (merged_df$X5 / merged_df$max_asa) * 100
+view(merged_df)
+```
+
+
+```{r}
+for (i in 1:nrow(Q08431)) {
+  string1 <- Q08431[i, "ACC"]
+  string2 <- df_maxasa[i, "mas_asa"]
+  
+  # Verifica si ambos valores no son NA y si son idénticos
+  if (!is.na(string1) && !is.na(string2) && identical(string1, string2)) {
+    Q08431$RSA <- (Q08431$X5[i] / df_maxasa$max_asa[i]) * 100
+  }
+}
+view(Q08431)
+```
+
+```{r}
+colnames(merged_df)[colnames(merged_df) == "#"] <- "Posición"
+
+view(merged_df)
+```
+
+
+
+```{r}
+fium<-ggplot(merged_df, aes(x = Posición, y = RSA)) +
+  geom_line(color="red") +
+  labs(
+    x = "Posiciones de la proteína",
+    y = "RSA",
+    title = "Perfil de Posiciones vs. RSA de la Proteína"
+  ) +
+  
+  # Personaliza el tema del gráfico (opcional)
+  theme_minimal()
+```
+
+```{r}
+fium
+```
+
+```{r}
+ggsave("C://tesina//Graficos//1er capitulo//perfil_RSA.png", plot = fium, width = 8, height = 6)
+```
+
+
+```{r}
+plddtCA1 <- read_table("C:/tablas_tesina/Alphafold/facu_ae3d9/plddtCA1", 
+    col_names = FALSE)
+plddtCA2 <- read_table("C:/tablas_tesina/Alphafold/facu_ae3d9/plddtCA2", 
+    col_names = FALSE)
+plddtCA3 <- read_table("C:/tablas_tesina/Alphafold/facu_ae3d9/plddtCA3", 
+    col_names = FALSE)
+plddtCA4 <- read_table("C:/tablas_tesina/Alphafold/facu_ae3d9/plddtCA4", 
+    col_names = FALSE)
+plddtCA5 <- read_table("C:/tablas_tesina/Alphafold/facu_ae3d9/plddtCA5", 
+    col_names = FALSE)
+```
+
+
+```{r}
+plddt_prom_modelo1<-mean(plddtCA1$X11)
+plddt_prom_modelo2<-mean(plddtCA2$X11)
+plddt_prom_modelo3<-mean(plddtCA3$X11)
+plddt_prom_modelo4<-mean(plddtCA4$X11)
+plddt_prom_modelo5<-mean(plddtCA5$X11)
+
+```
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,121 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(tidyr)
+```
+
+```{r}
+SNPs_patogenicidad <- read_csv("C:/tablas_tesina/1er capitulo/SNPs_patogenicidad.csv")
+view(SNPs_patogenicidad)
+```
+
+```{r}
+mut_ocultas<-subset(SNPs_patogenicidad,RSA<25)
+```
+
+```{r}
+mut_ocul1 <- mut_ocultas %>%
+ mutate(clas_SIFT = ifelse(is.na(numSIFT), "NA",
+                                ifelse(numSIFT < 0.05, "Deleterea", "Tolerable")))
+view(mut_ocul1)
+```
+
+
+```{r}
+mut_ocul2 <- mut_ocul1 %>%
+  mutate(clas_Polyphen = ifelse(is.na(numPolyphen), "NA",
+                                ifelse(numPolyphen < 0.446, "Benigna",
+                                ifelse(numPolyphen < 0.908, "Posiblemente danina", "Probablemente danina"))))
+view(mut_ocul2)
+```
+
+
+```{r}
+cor_SIFT_ocul<-cor.test(mut_ocul2$energia_normalizada_tot,mut_ocul2$numSIFT,method = "pearson")
+
+holanda<-ggplot(mut_ocul2, aes(x=energia_normalizada_tot, y=numSIFT, color=clas_SIFT,shape=clas_SIFT)) + 
+    geom_point(size=1) 
+paises_bajos<-holanda + labs(title = "ΔΔG vs SIFT score",x = "ΔΔG", y = "SIFT score")  + annotate("text", x = Inf, y = -Inf, 
+             label = paste("r =", round(cor_SIFT_ocul$estimate, 2), "p =", signif(cor_SIFT_ocul$p.value, 3)),
+             hjust = 1, vjust = -7,
+             size = 3)
+paises_bajos
+ggsave("C://tesina//Graficos//1er capitulo//grafDDGvsSIFT3_OCULTAS.png", plot = paises_bajos, width = 8, height = 6)
+```
+
+
+```{r}
+
+cor_Poly_ocul<-cor.test(mut_ocul2$energia_normalizada_tot,mut_ocul2$numPolyphen,method = "pearson")
+
+croacia<-ggplot(mut_ocul2, aes(x=energia_normalizada_tot, y=numPolyphen, color=clas_Polyphen,shape=clas_Polyphen)) + 
+    geom_point(size=1) 
+francia<-croacia + labs(title = "ΔΔG vs PolyPhen-2 score",x = "ΔΔG", y = "PolyPhen-2 score")  + annotate("text", x = Inf, y = -Inf, 
+             label = paste("r =", round(cor_Poly_ocul$estimate, 2), "p =", signif(cor_Poly_ocul$p.value, 3)),
+             hjust = 1, vjust = -7,
+             size = 3)
+francia
+ggsave("C://tesina//Graficos//1er capitulo//grafDDGvsPoly_OCULTAS.png", plot = francia, width = 8, height = 6)
+
+```
+
+
+```{r}
+
+cor_PolySIFT_ocul<-cor.test(mut_ocul2$numSIFT,mut_ocul2$numPolyphen,method = "pearson")
+
+nigeria<-ggplot(mut_ocul2, aes(x=numSIFT, y=numPolyphen, color=clas_Polyphen,shape=clas_SIFT)) + 
+    geom_point(size=1) 
+marruecos<-nigeria + labs(title = "SIFT score vs PolyPhen-2 score",x = "SIFT score", y = "PolyPhen-2 score")  + annotate("text", x = Inf, y = -Inf, 
+             label = paste("r =", round(cor_PolySIFT_ocul$estimate, 2), "p =", signif(cor_PolySIFT_ocul$p.value, 3)),
+             hjust = 1, vjust = -7,
+             size = 3)
+marruecos
+ggsave("C://tesina//Graficos//1er capitulo//grafSIFTvsPoly_OCULTAS.png", plot = marruecos, width = 8, height = 6)
+
+```
+
+```{r}
+promDGocul<-mean(mut_ocul2$energia_normalizada_tot)
+exp_solvente<-subset(SNPs_patogenicidad,RSA>=25)
+promDGexp<-mean(exp_solvente$energia_normalizada_tot)
+```
+
+```{r}
+
+```
+
+
+```{r}
+kkita<-unique(kkck$Uniprot_ID)
+print(length(kkita))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

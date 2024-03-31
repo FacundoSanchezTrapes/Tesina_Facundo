@@ -1,0 +1,329 @@
+---
+title: "Genomas_Reich"
+output: html_notebook
+---
+
+```{r}
+#install.packages("tidyverse")
+#install.packages("ggplot2")
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r}
+Genome_VEP_nonsyn <- read_delim("C:/tesina/Datasets_BD/Genome_VEP_nonsyn.tsv", 
+    delim = "\t", escape_double = FALSE, 
+    trim_ws = TRUE)
+#View(Genome_VEP_nonsyn)
+```
+```{r}
+#Genome_VEP <- read_delim("C://tablas_tesina//Genome_VEP_Nearnental.tsv", 
+ #   delim = "\t", escape_double = FALSE, 
+  #  trim_ws = TRUE)
+```
+
+
+```{r}
+data<-read.csv("C://tablas_tesina/kung_funding_data_20_5_23.csv")
+```
+
+```{r}
+#vector_nombre_genes<-subset(Genome_VEP_nonsyn,select = Gene)
+
+#write.csv(vector_nombre_genes, file = "vectornombregenes.csv", row.names = FALSE)
+
+
+```
+
+```{r}
+uniprotID <- read_delim("C:/tablas_tesina/uniprotID.tsv", 
+    delim = "\t", escape_double = FALSE, 
+    trim_ws = TRUE)
+#View(uniprotID)
+```
+
+```{r}
+#fila <- which(mutaciones_gus == "P57737", arr.ind = TRUE)
+
+```
+
+
+
+```{r}
+#union de las mutaciones de las proteinas con sus Uniprot id
+mutaciones<-merge(uniprotID,Genome_VEP_nonsyn,by.x ="From" ,by.y = "Gene")
+#view(mutaciones)
+```
+
+```{r}
+mutaciones_gus<-data.frame(uniprot_id=mutaciones$Entry,mutacion=mutaciones$Amino_acids,Posicion=mutaciones$Protein_position)
+write.csv(mutaciones_gus,"C://tablas_tesina//1er capitulo//mutaciones_gus")
+```
+
+
+```{r}
+#union de las mutaciones y sus ids con la info de kungfunding
+mutaciones_data<-merge(mutaciones,data,by.x = "Entry",by.y = "uniprot_id")
+
+#write.csv(mutaciones_data,"C://tablas_tesina//1er capitulo//mutaciones_data.csv")
+#view(mutaciones_data)
+```
+
+
+```{r}
+#union de uniprot de protes mutadas nonsyn y kungfunding
+mergedData <-merge(uniprotID, data, by.x="Entry",
+    by.y="uniprot_id")
+```
+
+```{r}
+View(mergedData)
+write.csv(mergedData,"C://tablas_tesina//1er capitulo//proteinas_mutadas")
+```
+
+```{r}
+nuevos_datos_desorden <- read_csv("C:/tablas_tesina/nuevos_datos_desorden.csv")
+View(nuevos_datos_desorden)
+```
+
+```{r}
+
+
+
+#union de los datos de desorden y mutadas nonsyn con kung funding
+mergedata_desorden<-merge(mergedData,nuevos_datos_desorden,by.x="Entry",
+        by.y ="uniprot_id")
+View(mergedata_desorden)
+#write.csv(mergedata_desorden,"C://tablas_tesina//1er capitulo")
+```
+
+
+```{r}
+#no creo que sea necesario pq ya los uni id son de desorden
+
+
+
+#mergeddata_final<-merge(mergedata_desorden,Genome_VEP_nonsyn,by.x="From",by.y = "Gene")
+#View(mergeddata_final)
+```
+
+```{r}
+#Filtro q separa si encuentra una posicion desordenada
+filtro_nonsyn_desorden<-mergeddata_final %>% 
+filter(mergeddata_final$Protein_position >= mergeddata_final$deso_beg & mergeddata_final$Protein_position <= mergeddata_final$deso_end)
+View(filtro_nonsyn_desorden)
+write.csv(filtro_nonsyn_desorden,"C://tablas_tesina//1er capitulo//mutaciones_en_pos_desor")
+```
+
+```{r}
+#Comparaciones RMSD
+rmsd_promedio_proteoma<-mean(data$RMSD100,na.rm = TRUE)
+print(rmsd_promedio_proteoma)
+```
+```{r}
+rmsd_promedio_nonsyn<-mean(mergedData$RMSD100,na.rm = TRUE)
+print(rmsd_promedio_nonsyn)
+```
+
+
+
+
+
+
+
+
+
+```{r}
+llpsnonsyn<- subset(mergedData,cat_LLPs=="LLPs",na.rm=TRUE)
+view(llpsnonsyn)
+```
+
+
+
+
+
+
+
+
+
+```{r}
+#Comparacion largo de protes
+mean_length_ref<-mean(data$length,na.rm=TRUE)
+mean_length_ref
+mean_length_nonsyn<-mean(mergedData$length,na.rm = TRUE)
+mean_length_nonsyn
+```
+
+```{r}
+#generacion de referencia desordenadas
+desordenadas_ref<-subset(data,data$dis_fraction>=0.6)
+View(desordenadas_ref)
+```
+
+```{r}
+#calculo de orden
+desordenadas_nonsyn<-subset(Toda_la_info,Toda_la_info_no_sinonimas$dis_fraction>=0.6)
+View(desordenadas_nonsyn)
+```
+
+
+```{r}
+#nonsyn_mutacion_desorden<-subset(Genome_VEP_nonsyn,Genome_VEP_nonsyn$Protein_position>=nuevos_datos_desorden$deso_beg & Genome_VEP_nonsyn<=nuevos_datos_desorden$deso_end)
+#View(nonsyn_mutacion_desorden)
+```
+
+
+
+```{r}
+long_total_no_sinonimas<-mean(Toda_la_info$length)
+long_total_no_sinonimas
+
+```
+
+
+
+```{r}
+cantidad_protes <- nrow(mergedData)
+
+for (i in 1:cantidad_protes) {
+  # Obtenemos el nombre de entrada de cada fila
+  Uniid <- mergedData[i, "Entry"]
+  
+  # Creamos el string con la información
+  AFdeUniid <- paste0("wget -O ", Uniid, ".pdb -b https://alphafold.ebi.ac.uk/files/AF-", Uniid, "-F1-model_v4.pdb")
+  #wget -O A0QPE7.pdb -b https://alphafold.ebi.ac.uk/files/AF-A0QPE7-F1-model_v4.pdb
+
+  # Imprimimos el string
+  print(AFdeUniid)
+}
+
+
+
+#codigo_AF<-
+
+
+```
+
+
+```{r}
+# Load required library
+library(bio3d)
+
+# Function to extract PDB ID and beta column from a PDB file
+#extract_beta_from_pdb <- function(file_path) {
+  # Read PDB file
+#  pdb_data <- read.pdb(file_path,multi=TRUE,rm.insert = TRUE)
+  
+  # Extract PDB ID
+ # pdb_id <- pdb_data$atom$info[1]$pdb
+  
+  # Extract beta column
+#  beta <- pdb_data$atom$temp
+  
+  # Return PDB ID and beta as a data frame
+ # return(data.frame(PDB_ID = pdb_id, Beta = beta))
+#}
+
+
+# Función para extraer el PDB ID y el vector de beta de un archivo PDB
+extract_beta_from_pdb <- function(file_path) {
+  # Leer el archivo PDB
+  pdb_data <- tryCatch(
+    read.pdb(file_path, multi = TRUE, rm.insert = TRUE),
+    error = function(e) {
+      message(paste("Error en lectura del archivo:", file_path))
+      return(NULL)
+    }
+  )
+  
+  if (is.null(pdb_data)) {
+    return(NULL)
+  }
+  
+  # Extraer el PDB ID
+  pdb_id <- pdb_data$atom$info[1]$pdb
+  
+  # Extraer el vector de beta
+  beta <- pdb_data$atom$temp
+  
+  # Crear un dataframe con el PDB ID y el vector de beta
+  data_frame <- data.frame(PDB_ID = pdb_id, Beta = I(list(beta)))
+  
+  return(data_frame)
+}
+
+
+
+# Function to read all PDB files in a folder and combine the data
+read_pdbs_and_combine <- function(folder_path) {
+  # Get a list of all PDB files in the folder
+  pdb_files <- list.files(folder_path, pattern = "\\.pdb$", full.names = TRUE)
+  
+  # Initialize an empty list to store the extracted data
+  data_list <- list()
+  
+  # Loop through each PDB file and extract the data
+  for (i in "C:\\tablas_tesina\\popote\\") {
+    data_list[[i]] <- extract_beta_from_pdb(i)
+  }
+  
+  # Combine all data frames into a single data frame
+  combined_data <- do.call(rbind, data_list)
+  
+  return(combined_data)
+}
+
+# Replace 'path/to/your/folder' with the actual path to the folder containing your PDB files
+folder_path <- "C:/tablas_tesina/popote"
+combined_data <- read_pdbs_and_combine<-read_pdbs_and_combine("C:/tablas_tesina/popote")
+
+# Print the resulting dataframe
+print(combined_data)
+```
+
+
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+
+
+```{r}
+Toda_la_info_no_sinonimas<-merge(mergedData,kkck,by.x="Entry",
+    by.y="Uniprot_ID")
+```
+
+```{r}
+write.csv(Toda_la_info,"C://tablas_tesina//1er capitulo//TODOS LOS DATOS TESINA NO SINONIMOS.csv")
+```
+
+
+```{r}
+#Con esto cuento cada tipo para despues ponerlos en un vector
+#Ese vector junto con otro q tiene las categoria hacen un nuevo DF
+sum_mem_nsyn<-sum(grepl("Ref_Membrane", Toda_la_info$category_amyloids))
+sum_cyto_nsyn<-sum(grepl("Ref_Cyto", Toda_la_info$category_amyloids))
+sum_sec_nsyn<-sum(grepl("Ref_Secreted", Toda_la_info$category_amyloids))
+
+vector_nonsyn_category<-c(sum_cyto_nsyn,sum_mem_nsyn,sum_sec_nsyn)
+vector_category<-c("Cyto","Memb","Sec")
+ 
+df_category<-data.frame(vector_category,vector_nonsyn_category)
+View(df_category)
+
+grafico <- ggplot(df_category, aes(x = vector_category, y = vector_nonsyn_category)) +
+  geom_bar(stat = "identity", fill = "red")+
+  labs(x = "Cantidad de proteínas", y = "Destino de las proteinas")
+ggsave("C://tesina//Graficos//1er capitulo//graf_category_protein1.png", plot = grafico, width = 8, height = 6,dpi=300)
+grafico
+  
+```
+
+```{r}
+sum_mem_ref<-sum(grepl("Ref_Membrane", data$category_amyloids))
+sum_cyto_ref<-sum(grepl("Ref_Cyto", data$category_amyloids))
+sum_sec_ref<-sum(grepl("Ref_Secreted", data$category_amyloids))
+
+```
+

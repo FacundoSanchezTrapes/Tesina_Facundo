@@ -1,0 +1,54 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+kulote <- read_table("C:/tablas_tesina/plddt_parseados/kulote", 
+    col_names = FALSE)
+```
+
+```{r}
+kkita<-kkck$Uniprot_ID
+```
+
+
+```{r}
+kkita2<-as.data.frame(kkita)
+```
+
+
+```{r}
+plddt_prom<-merge(kkita2,kulote,by.x="kkita",by.y="X1")
+
+```
+
+
+```{r}
+  jorge<-ggplot( plddt_prom,aes(x=X3)) +
+    geom_density(fill="red", color="#891000", alpha=0.8) +
+    ggtitle("Distribucion del plDDT promedio de las proteínas")+
+    xlab("plDDT promedio")
+  
+jorge
+```
+
+
+```{r}
+ggsave("C://tesina//Graficos//1er capitulo//distplddt1.png", plot = jorge, width = 8, height = 6,dpi=300)
+```
+
+
+```{r}
+```
+
+
+
+
+

@@ -1,0 +1,102 @@
+---
+title: "Codon Bias using BioConductor"
+output: html_notebook
+---
+
+
+
+```{r}
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install("coRdon")
+```
+```{r}
+
+library(coRdon)
+```
+
+```{r}
+dna_altai <- readSet(
+  file="D://Tesina//Tesina Facundo//primary_target.transcripts.CDS_3.Altai.fa"
+)
+
+dna_vindija <- readSet(
+  file="D://Tesina//Tesina Facundo//primary_target.transcripts.CDS_3.Vindija.fa"
+)
+
+dna_sidron <- readSet(
+  file="D://Tesina//Tesina Facundo//primary_target.transcripts.CDS_3.Sidron.fa"
+)
+
+
+alt_codon <- codonTable(dna_altai)
+vin_codon <- codonTable(dna_vindija)
+sid_codon <- codonTable(dna_sidron)
+
+```
+
+```{r}
+head(alt_codon)
+
+```
+
+
+```{r}
+alt_cc <- codonCounts(alt_codon)
+
+vin_cc <- codonCounts(vin_codon)
+
+sid_cc <- codonCounts(sid_codon)
+
+head(alt_cc)
+```
+```{r}
+alt_milc <- MILC(alt_codon)#, filtering = "soft")
+vin_milc <- MILC(vin_codon)
+sid_milc <- MILC(sid_codon)
+
+head(milc)
+```
+```{r}
+lengths <- as.data.frame(getlen(alt_codon))
+colnames(lengths) <- "length"
+ggplot(lengths, aes(length)) + 
+    geom_density() +
+    geom_vline(xintercept = 80, colour = "red") +
+    theme_light()
+```
+```{r}
+lengths <- as.data.frame(getlen(vin_codon))
+colnames(lengths) <- "length"
+ggplot(lengths, aes(length)) + 
+    geom_density() +
+    geom_vline(xintercept = 80, colour = "red") +
+    theme_light()
+
+```
+```{r}
+lengths <- as.data.frame(getlen(sid_codon))
+colnames(lengths) <- "length"
+ggplot(lengths, aes(length)) + 
+    geom_density() +
+    geom_vline(xintercept = 80, colour = "red") +
+    theme_light()
+
+```
+```{r}
+intraBplot(alt_codon, vin_codon, names = c("ALT", "VIN"), 
+            variable = "MILC", 
+            ribosomal = FALSE)
+```
+```{r}
+intraBplot(alt_codon, sid_codon, names = c("ALT", "VIN"), 
+            variable = "MILC", 
+            ribosomal = FALSE)
+
+```
+```{r}
+intraBplot(sid_codon, vin_codon, names = c("ALT", "VIN"), 
+            variable = "MILC", 
+            ribosomal = FALSE)
+```
+
